@@ -1,9 +1,8 @@
 <template>
-  <router-view />
+    <router-view />
 </template>
 
-<script setup>
-</script>
+<script setup></script>
 
 <style>
 /* App-level styles are in assets/main.css */

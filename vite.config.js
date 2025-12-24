@@ -17,11 +17,11 @@ export default defineConfig({
 
     server: {
         https: true,
-        port: 8666,
+        port: 8200,
         host: '0.0.0.0',
         hmr: {
             host: 'dev.smit.team',
-            port: 8666,
+            port: 8200,
             protocol: 'wss'
         }
     }

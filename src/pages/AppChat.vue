@@ -180,27 +180,74 @@
                                     <div class="text-center text-[0.8rem] text-[#65676b] my-4">Hôm nay</div>
 
                                     <!-- Sửa ở đây -->
-                                    <div v-for="(msg, index) in current_messages" :key="index" class="flex items-end gap-2 max-w-[70%]" :class="{ 'self-start': !msg.is_sent, 'self-end flex-row-reverse': msg.is_sent }">
+                                    <div v-for="(msg, index) in current_messages" :key="index" class="group/msg flex items-center gap-2 max-w-[70%]" :class="{ 'self-start': !msg.is_sent, 'self-end flex-row-reverse': msg.is_sent }">
                                         <template v-if="!msg.is_sent">
                                             <div v-if="msg.from_id === current_conversation.contacts[0]?.id || current_conversation.thread_name" class="shrink-0">
                                                 <img v-if="current_conversation.thread_avatar || current_conversation.contacts[0]?.avatar_url" :src="current_conversation.thread_avatar || current_conversation.contacts[0]?.avatar_url" alt="" class="w-7 h-7 rounded-full object-cover" />
                                                 <span v-else class="w-7 h-7 rounded-full bg-[#ccc] flex items-center justify-center text-[0.8rem] text-white">{{ current_conversation.contacts[0]?.display_name?.charAt(0) || '?' }}</span>
                                             </div>
-                                            <div class="py-2 px-3 rounded-r-[8px] rounded-l-[5px] relative break-words bg-white text-[#050505] shadow-[0_1px_2px_rgba(0,0,0,0.1)]">
-                                                <div v-if="msg.attachments.length && msg.attachments[0].type === 'image'">
-                                                    <img :src="msg.attachments[0].href" alt="" />
+                                            <div class="relative flex items-center gap-2 min-w-0">
+                                                <div class="py-2 px-3 rounded-r-[8px] rounded-l-[5px] break-words bg-white text-[#050505] shadow-[0_1px_2px_rgba(0,0,0,0.1)] min-w-0">
+                                                    <div v-if="msg.attachments?.length && msg.attachments[0].type === 'image'">
+                                                        <img :src="msg.attachments[0].href" alt="" />
+                                                    </div>
+                                                    <div v-else-if="msg.attachments?.length && msg.attachments[0].type === 'file'">
+                                                        <a :href="msg.attachments[0].href" download class="text-[0.95rem] leading-[1.4]">{{ msg.attachments[0].href }}</a>
+                                                    </div>
+                                                    <div v-else-if="msg.attachments?.length && msg.attachments[0].type === 'video'">
+                                                        <video :src="msg.attachments[0].href" controls class="w-full h-auto"></video>
+                                                    </div>
+                                                    <div v-else-if="msg.attachments?.length && msg.attachments[0].type === 'voice'">
+                                                        <VoiceMessage :src="msg.attachments[0].href" />
+                                                    </div>
+                                                    <div class="text-[0.95rem] leading-[1.4]">{{ msg.content }}</div>
                                                 </div>
-                                                <div v-else-if="msg.attachments.length && msg.attachments[0].type === 'file'">
-                                                    <a :href="msg.attachments[0].href" download class="text-[0.95rem] leading-[1.4]">{{ msg.attachments[0].href }}</a>
+                                            </div>
+
+                                            <!-- Hover actions -->
+                                            <div class="flex items-center gap-1 opacity-0 group-hover/msg:opacity-100 duration-200 bg-[#E8EDF2] rounded-[8px] px-2 shrink-0">
+                                                <div class="relative group/tooltip">
+                                                    <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700" @click="replyMessage(msg)">
+                                                        <img src="/icon/icon-reply.svg" alt="Reply" class="w-4 h-4 shrink-0" />
+                                                    </button>
+                                                    <div class="absolute bottom-full left-1/2 mb-3 px-2 py-1 bg-[#333] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity" style="transform: translateX(-50%)">
+                                                        Trả lời tin nhắn
+                                                        <span class="absolute bottom-0 left-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#333]" style="transform: translate(-50%, 100%)"></span>
+                                                    </div>
                                                 </div>
-                                                <div v-else-if="msg.attachments.length && msg.attachments[0].type === 'video'">
-                                                    <video :src="msg.attachments[0].href" controls class="w-full h-auto"></video>
+                                                <div class="relative group/tooltip">
+                                                    <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700">
+                                                        <img src="/icon/icon-pin.svg" alt="Pin" class="w-4 h-4 shrink-0" />
+                                                    </button>
+                                                    <div class="absolute bottom-full left-1/2 mb-3 px-2 py-1 bg-[#333] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity" style="transform: translateX(-50%)">
+                                                        Ghim tin nhắn
+                                                        <span class="absolute bottom-0 left-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#333]" style="transform: translate(-50%, 100%)"></span>
+                                                    </div>
                                                 </div>
-                                                <div v-else-if="msg.attachments.length && msg.attachments[0].type === 'voice'">
-                                                    <VoiceMessage :src="msg.attachments[0].href" />
+                                                <div class="relative group/tooltip">
+                                                    <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700" @click="selectNoteMessage(msg)">
+                                                        <img src="/icon/icon-note.svg" alt="Note" class="w-4 h-4 shrink-0" />
+                                                    </button>
+                                                    <div class="absolute bottom-full left-1/2 mb-3 px-2 py-1 bg-[#333] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity" style="transform: translateX(-50%)">
+                                                        Ghi chú
+                                                        <span class="absolute bottom-0 left-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#333]" style="transform: translate(-50%, 100%)"></span>
+                                                    </div>
                                                 </div>
-                                                <div class="text-[0.95rem] leading-[1.4]">{{ msg.content }}</div>
-                                                <!-- <div class="text-[0.65rem] mt-1 opacity-70 text-right">{{ msg.time }}</div> -->
+                                                <div class="relative group/tooltip">
+                                                    <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700">
+                                                        <img src="/icon/icon-end-conversation.svg" alt="End Conversation" class="w-4 h-4 shrink-0" />
+                                                    </button>
+                                                    <div class="absolute bottom-full left-1/2 mb-3 px-2 py-1 bg-[#333] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity" style="transform: translateX(-50%)">
+                                                        Kết thúc cuộc hội thoại
+                                                        <span class="absolute bottom-0 left-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#333]" style="transform: translate(-50%, 100%)"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Sender info on hover -->
+                                            <div class="flex flex-col gap-0.5 opacity-0 group-hover/msg:opacity-100 text-xs whitespace-nowrap shrink-0">
+                                                <div class="text-[#000A2C]">{{ current_conversation.contacts[0]?.display_name || current_conversation.thread_name }}</div>
+                                                <div class="text-gray-500">{{ formatFullTime(msg.created_at) }}</div>
                                             </div>
                                         </template>
 
@@ -210,21 +257,67 @@
                                                 <span class="w-7 h-7 rounded-full bg-[#ccc] flex items-center justify-center text-[0.8rem] text-white">{{ user_crm?.name?.charAt(0) || '?' }}</span>
                                             </div>
 
-                                            <div class="py-2 px-3 rounded-r-[5px] rounded-l-[8px] relative break-words bg-[#0084ff] text-white">
-                                                {{ msg.attachments[0]?.href }}
-                                                <div v-if="msg.attachments.length && msg.attachments[0].type === 'image'">
-                                                    <img :src="msg.attachments[0]?.href" alt="" />
+                                            <div class="relative flex items-center gap-2 min-w-0">
+                                                <!-- Hover actions (bên trái cho tin nhắn sent) -->
+                                                <div class="flex items-center gap-1 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-200 bg-[#E8EDF2] rounded-[8px] px-2 shrink-0">
+                                                    <div class="relative group/tooltip">
+                                                        <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700">
+                                                            <img src="/icon/icon-end-conversation.svg" alt="End Conversation" class="w-4 h-4 shrink-0" />
+                                                        </button>
+                                                        <div class="absolute bottom-full left-1/2 mb-3 px-2 py-1 bg-[#333] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity" style="transform: translateX(-50%)">
+                                                            Kết thúc cuộc hội thoại
+                                                            <span class="absolute bottom-0 left-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#333]" style="transform: translate(-50%, 100%)"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="relative group/tooltip">
+                                                        <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700" @click="selectNoteMessage(msg)">
+                                                            <img src="/icon/icon-note.svg" alt="Note" class="w-4 h-4 shrink-0" />
+                                                        </button>
+                                                        <div class="absolute bottom-full left-1/2 mb-3 px-2 py-1 bg-[#333] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity" style="transform: translateX(-50%)">
+                                                            Ghi chú
+                                                            <span class="absolute bottom-0 left-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#333]" style="transform: translate(-50%, 100%)"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="relative group/tooltip">
+                                                        <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700">
+                                                            <img src="/icon/icon-pin.svg" alt="Pin" class="w-4 h-4 shrink-0" />
+                                                        </button>
+                                                        <div class="absolute bottom-full left-1/2 mb-3 px-2 py-1 bg-[#333] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity" style="transform: translateX(-50%)">
+                                                            Ghim tin nhắn
+                                                            <span class="absolute bottom-0 left-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#333]" style="transform: translate(-50%, 100%)"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="relative group/tooltip">
+                                                        <button class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700" @click="replyMessage(msg)">
+                                                            <img src="/icon/icon-reply.svg" alt="Reply" class="w-4 h-4 shrink-0" />
+                                                        </button>
+                                                        <div class="absolute bottom-full left-1/2 mb-3 px-2 py-1 bg-[#333] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity" style="transform: translateX(-50%)">
+                                                            Trả lời tin nhắn
+                                                            <span class="absolute bottom-0 left-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#333]" style="transform: translate(-50%, 100%)"></span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div v-else-if="msg.attachments.length && msg.attachments[0].type === 'file'">
-                                                    <a :href="msg.attachments[0]?.href" download class="text-[0.95rem] leading-[1.4]">{{ msg.attachments[0]?.href }}</a>
+                                                <div class="py-2 px-3 rounded-r-[5px] rounded-l-[8px] break-words bg-[#E2F3FF] text-black min-w-0">
+                                                    <div v-if="msg.attachments?.length && msg.attachments[0].type === 'image'">
+                                                        <img :src="msg.attachments[0]?.href" alt="" />
+                                                    </div>
+                                                    <div v-else-if="msg.attachments?.length && msg.attachments[0].type === 'file'">
+                                                        <a :href="msg.attachments[0]?.href" download class="text-[0.95rem] leading-[1.4]">{{ msg.attachments[0]?.href }}</a>
+                                                    </div>
+                                                    <div v-else-if="msg.attachments?.length && msg.attachments[0].type === 'video'">
+                                                        <video :src="msg.attachments[0]?.href" controls class="w-full h-auto"></video>
+                                                    </div>
+                                                    <div v-else-if="msg.attachments?.length && msg.attachments[0].type === 'voice'">
+                                                        <VoiceMessage :src="msg.attachments[0].href" />
+                                                    </div>
+                                                    <div v-else class="text-[0.95rem] leading-[1.4]">{{ msg.content }}</div>
                                                 </div>
-                                                <div v-else-if="msg.attachments.length && msg.attachments[0].type === 'video'">
-                                                    <video :src="msg.attachments[0]?.href" controls class="w-full h-auto"></video>
-                                                </div>
-                                                <div v-else-if="msg.attachments.length && msg.attachments[0].type === 'voice'">
-                                                    <VoiceMessage :src="msg.attachments[0].href" />
-                                                </div>
-                                                <div v-else class="text-[0.95rem] leading-[1.4]">{{ msg.content }}</div>
+                                            </div>
+
+                                            <!-- Sender info on hover (bên trái cho sent) -->
+                                            <div class="flex flex-col gap-0.5 opacity-0 group-hover/msg:opacity-100 text-xs whitespace-nowrap shrink-0 text-right">
+                                                <div class="text-[#000A2C]">{{ user_crm?.name }}</div>
+                                                <div class="text-gray-500">{{ formatFullTime(msg.created_at) }}</div>
                                             </div>
                                         </template>
                                     </div>
@@ -233,34 +326,61 @@
                             </template>
                         </div>
 
-                        <div v-if="tags.length" class="px-3 py-2 bg-white border-t border-[#e4e6eb] flex gap-2 flex-wrap">
+                        <div v-if="tags.length && !show_reply_message" class="px-3 py-2 bg-white border-t border-[#e4e6eb] flex gap-2 flex-wrap">
                             <div v-for="tag in tags" :key="tag.id" class="px-3 py-1 rounded-[4px] text-xs font-medium cursor-pointer hover:opacity-80 text-white min-w-fit flex items-center gap-1" :class="{ 'opacity-70 cursor-wait': processingTags.includes(tag.id) }" :style="{ backgroundColor: isTagActive(tag.id) ? tag.color : tag.color + '40' }" @click="!processingTags.includes(tag.id) && addTag(tag)">
                                 <LoadingButton v-if="processingTags.includes(tag.id)" color="white" />
                                 {{ tag.tag_name }}
                             </div>
                         </div>
 
-                        <div class="px-4 py-3 bg-white border-t border-[#e4e6eb] flex items-center gap-3">
+                        <div v-if="show_reply_message && selected_reply_message" class="px-4 py-3 bg-white border-t border-[#e4e6eb] flex items-center gap-3">
+                            <div class="flex-1 flex items-center border-l-[4px] border-[#1a56db] bg-[#f0f7ff] rounded-[8px] px-3 py-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-[15px] font-medium text-black">{{ selected_reply_message?.is_sent ? user_crm?.name : current_conversation?.contacts[0]?.display_name || current_conversation?.thread_name || 'Người dùng' }}</div>
+                                    <div class="text-sm text-gray-600 truncate">{{ selected_reply_message?.content }}</div>
+                                </div>
+                                <button @click="clearReplyMessage" class="shrink-0 p-1 hover:bg-gray-200 rounded ml-2">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-500">
+                                        <path d="M18 6L6 18M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="px-4 py-3 bg-white border-t border-[#e4e6eb] flex items-center gap-3 relative">
+                            <!-- Shortcut suggestions dropdown -->
+                            <div v-if="show_shortcut_suggestions && filtered_shortcuts.length" ref="shortcutDropdown" class="absolute bottom-full left-0 right-0 mb-1 bg-white border border-[#e4e6eb] rounded-lg shadow-lg max-h-[280px] overflow-y-auto z-50">
+                                <div class="px-3 py-2 text-[14px] text-gray-500 font-medium">Gợi ý tin nhắn nhanh ({{ filtered_shortcuts.length }})</div>
+                                <div class="flex flex-col gap-2 p-2 pt-0">
+                                    <div v-for="(shortcut, index) in filtered_shortcuts" :key="shortcut.id || index" :ref="'shortcutItem' + index" class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all" :class="index === selected_shortcut_index ? 'border-[#1a56db] bg-white' : 'border-[#e4e6eb] hover:border-[#c5ced8]'" @click="selectShortcut(shortcut)" @mouseenter="selected_shortcut_index = index">
+                                        <div class="flex flex-col gap-1 min-w-0 flex-1">
+                                            <span class="text-[#1a56db] font-medium text-sm">/{{ shortcut.shortcut }}</span>
+                                            <span class="text-gray-600 text-sm truncate">{{ shortcut.content }}</span>
+                                        </div>
+                                        <span v-if="index === selected_shortcut_index" class="text-[#1a56db] text-sm font-medium shrink-0 ml-2">↵ Enter</span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="w-8 h-8 rounded-full overflow-hidden shrink-0">
                                 <img :src="this.avatar_platform" alt="" class="w-full h-full object-cover" />
                             </div>
                             <div class="flex-1 flex items-center justify-between">
-                                <input ref="msgInput" type="text" :placeholder="`Trả lời từ ${user_crm?.name || '...'}`" v-model="message_input" @keydown.enter.prevent="sendMessage(current_conversation)" class="flex-1 border-none bg-transparent p-2 text-[0.95rem] outline-none text-[#65676b]" />
-                                <div class="flex items-center gap-3">
-                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a1a1a] cursor-pointer p-1" @click="showVoiceRecorder = true">
-                                        <img src="/icon/icon-voiced.svg" alt="" class="w-6 h-6" />
+                                <input ref="msgInput" type="text" :placeholder="`Trả lời từ ${user_crm?.name || '...'}`" v-model="message_input" @keydown="handleMessageKeydown" class="flex-1 border-none bg-transparent p-2 text-[0.95rem] outline-none text-[#65676b]" />
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a1a1a] cursor-pointer p-1 shrink-0" @click="showVoiceRecorder = true">
+                                        <img src="/icon/icon-voiced.svg" alt="" class="w-6 h-6 shrink-0" />
                                     </button>
-                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a1a1a] cursor-pointer p-1" @click="showFolderImage = true">
-                                        <img src="/icon/icon-image.svg" alt="" class="w-6 h-6" />
+                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a1a1a] cursor-pointer p-1 shrink-0" @click="showFolderImage = true">
+                                        <img src="/icon/icon-image.svg" alt="" class="w-6 h-6 shrink-0" />
                                     </button>
-                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a1a1a] cursor-pointer p-1" @click="showListTag = true">
-                                        <img src="/icon/icon-tag.svg" alt="" class="w-6 h-6" />
+                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a1a1a] cursor-pointer p-1 shrink-0" @click="showListTag = true">
+                                        <img src="/icon/icon-tag.svg" alt="" class="w-6 h-6 shrink-0" />
                                     </button>
-                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a1a1a] cursor-pointer p-1" @click="showShortcut = true">
-                                        <img src="/icon/icon-message.svg" alt="" class="w-6 h-6" />
+                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a1a1a] cursor-pointer p-1 shrink-0" @click="showShortcut = true">
+                                        <img src="/icon/icon-message.svg" alt="" class="w-6 h-6 shrink-0" />
                                     </button>
-                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a56db] cursor-pointer p-1" @click="sendMessage(current_conversation)">
-                                        <img src="/icon/icon-send.svg" alt="" class="w-6 h-6" />
+                                    <button class="border-none bg-transparent text-[#65676b] hover:text-[#1a56db] cursor-pointer p-1 shrink-0" @click="sendMessage(current_conversation)">
+                                        <img src="/icon/icon-send.svg" alt="" class="w-6 h-6 shrink-0" />
                                     </button>
                                 </div>
                             </div>
@@ -283,7 +403,7 @@
                         <div class="text-[black] text-lg font-semibold font-['Inter_Tight'] leading-7">{{ show_message_note ? 'Ghi chú tin nhắn' : 'Kết thúc tin nhắn' }}</div>
                     </div>
                     <template v-if="show_message_note">
-                        <div class="flex-1 overflow-y-auto p-3">
+                        <div ref="notesPanel" class="flex-1 overflow-y-auto p-3">
                             <div class="flex flex-col justify-end min-h-full gap-[15px]">
                                 <div v-for="message in messages_note" :key="message.id" class="group flex flex-col p-[10px] gap-[8px] bg-[#F4F6FA] rounded-[10px]">
                                     <div class="flex justify-between">
@@ -300,7 +420,7 @@
                                             <img class="w-[18px] h-[18px] icon-hover-yellow" src="/icon/icon-pin.svg" alt="" />
                                         </div>
                                     </div>
-                                    <div class="bg-blue-600/10 rounded-[8px]">
+                                    <div v-if="message?.content" class="bg-blue-600/10 rounded-[8px]">
                                         <div class="px-3 py-2 text-Text-Neutral-500 text-sm font-medium font-['Inter'] leading-4">{{ message.content }}</div>
                                     </div>
                                     <div>{{ message.note }}</div>
@@ -308,10 +428,25 @@
                             </div>
                         </div>
                         <div class="p-3 pt-0">
-                            <div class="flex items-start border border-[#E8EDF2] rounded-[5px] h-28 shrink-0">
-                                <textarea placeholder="Nhập để ghi chú ( Enter để gửi )" class="w-full h-full p-[10px] scrollbar-thin scrollbar-thumb-[#E8EDF2] border-none outline-none resize-none" name="" id=""></textarea>
-                                <div class="cursor-pointer z-21 p-[10px]">
-                                    <img src="/icon/icon-image.svg" alt="" />
+                            <div class="relative flex flex-col border border-[#E8EDF2] rounded-[5px] shrink-0">
+                                <!-- Selected message to note -->
+                                <div v-if="selected_note_message" class="flex items-center gap-2 px-[10px] py-2">
+                                    <div class="flex flex-1 bg-blue-600/10 items-center justify-between rounded-[5px] pl-[5px] py-1">
+                                        <div class="text-sm text-gray-600 truncate">{{ selected_note_message.content }}</div>
+                                        <button @click="clearSelectedNote" class="shrink-0 p-1 hover:bg-red-50 rounded">
+                                            <img src="/icon/icon-close-red.svg" alt="Close" class="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div class="shrink-0 p-1 cursor-pointer">
+                                        <img src="/icon/icon-image.svg" alt="" class="w-5 h-5" />
+                                    </div>
+                                </div>
+                                <!-- Textarea with icon -->
+                                <div class="relative">
+                                    <textarea v-model="note_content" placeholder="Nhập để ghi chú ( Enter để gửi )" class="w-full h-24 p-[10px] pr-10 scrollbar-thin scrollbar-thumb-[#E8EDF2] border-none outline-none resize-none" @keydown.enter.exact.prevent="sendMessageNote"></textarea>
+                                    <div v-if="!selected_note_message" class="absolute top-2 right-2 cursor-pointer">
+                                        <img src="/icon/icon-image.svg" alt="" class="w-5 h-5" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -565,7 +700,7 @@ export default {
             selectedPages: [],
             accessToken: null,
             showChat: false,
-            message_input: '',
+            draft_messages: {},
             current_conversation: null,
             current_messages: [],
             conversations: [],
@@ -577,16 +712,57 @@ export default {
             date_message: null,
             showTagDropdown: false,
             searchTagQuery: '',
-            shortcuts: []
+            shortcuts: [],
+
+            // Reply message
+            show_reply_message: false,
+            selected_reply_message: null,
+            reply_message_id: '',
+
+            // Note state
+            note_content: '',
+            note_message_id: null,
+            selected_note_message: null,
+
+            // Shortcut suggestion state
+            show_shortcut_suggestions: false,
+            selected_shortcut_index: 0
         }
     },
     computed: {
         ...mapState(useUserStore, ['user_crm', 'listUser']),
 
+        // Computed property để mỗi conversation có input riêng
+        message_input: {
+            get() {
+                if (!this.current_conversation) return ''
+                return this.draft_messages[this.current_conversation.id] || ''
+            },
+            set(value) {
+                if (!this.current_conversation) return
+                this.draft_messages = { ...this.draft_messages, [this.current_conversation.id]: value }
+
+                // Handle shortcut suggestions
+                if (value.startsWith('/')) {
+                    this.show_shortcut_suggestions = true
+                    this.selected_shortcut_index = 0
+                } else {
+                    this.show_shortcut_suggestions = false
+                }
+            }
+        },
+
         filteredDropdownTags() {
             if (!this.searchTagQuery) return this.tags
             const query = this.searchTagQuery.toLowerCase()
             return this.tags.filter(tag => tag.tag_name.toLowerCase().includes(query))
+        },
+
+        filtered_shortcuts() {
+            if (!this.message_input.startsWith('/')) return []
+            const query = this.message_input.slice(1).toLowerCase()
+            if (!query) return this.shortcuts
+            return this.shortcuts.filter(s => s.shortcut?.toLowerCase().includes(query) || s.content?.toLowerCase().includes(query))
         },
 
         filtered_conversations() {
@@ -706,6 +882,62 @@ export default {
         formatUserName(user_id) {
             return this.listUser.find(user => user.id === user_id)?.name
         },
+        replyMessage(msg) {
+            this.reply_message_id = msg.message_id
+            this.selected_reply_message = msg
+            this.show_reply_message = true
+        },
+        clearReplyMessage() {
+            this.reply_message_id = ''
+            this.selected_reply_message = null
+            this.show_reply_message = false
+        },
+        selectNoteMessage(msg) {
+            this.note_message_id = msg.message_id
+            this.selected_note_message = msg
+            this.note_content = ''
+            // Scroll panel để hiển thị đầy đủ notes khi selected message xuất hiện
+            this.scrollNotesPanel()
+        },
+        clearSelectedNote() {
+            this.selected_note_message = null
+            this.note_message_id = null
+        },
+        scrollNotesPanel() {
+            this.$nextTick(() => {
+                const panel = this.$refs.notesPanel
+                if (panel) {
+                    panel.scrollTop = panel.scrollHeight
+                }
+            })
+        },
+        async sendMessageNote() {
+            if (!this.note_content.trim()) return
+
+            try {
+                const response = await api({
+                    url: '/scrm/chat/message-note',
+                    method: 'POST',
+                    data: {
+                        social_id: this.current_platform.social_id,
+                        conversation_id: this.current_conversation.conversation_id,
+                        message_id: this.note_message_id,
+                        note: this.note_content,
+                        image_url: [],
+                        video_url: []
+                    }
+                })
+
+                if (!response.error) {
+                    this.note_content = ''
+                    this.clearSelectedNote()
+                    // Refresh message notes
+                    this.listMessageNote(this.current_platform.social_id, this.current_conversation.conversation_id)
+                }
+            } catch (error) {
+                console.error('Error sending message note:', error)
+            }
+        },
         isTagActive(tagId) {
             if (!this.current_conversation?.tags) return false
             return this.current_conversation.tags.some(t => (t.tag_id || t.id) === tagId)
@@ -752,6 +984,7 @@ export default {
             })
             if (res.success) {
                 this.messages_note = res.data.reverse()
+                this.scrollNotesPanel()
             } else {
                 this.messages_note = []
             }
@@ -985,6 +1218,7 @@ export default {
             this.current_conversation = conv
             this.listMessage(conv)
             this.listMessageNote(conv.social_id, conv.conversation_id)
+            this.clearReplyMessage()
         },
 
         async listMessage(conv) {
@@ -1070,14 +1304,13 @@ export default {
             const message = this.message_input.trim()
 
             this.message_input = ''
-            if (this.$refs.msgInput) this.$refs.msgInput.value = ''
 
             this.current_messages.push({
                 id: Date.now(),
                 content: message,
                 time: moment().format('HH:mm'),
-                is_sent: true,
-                attachments: attachments
+                is_sent: true
+                // attachments: attachments
             })
 
             this.$nextTick(() => {
@@ -1087,8 +1320,13 @@ export default {
             let data = {
                 message: message,
                 social_id: conv.social_id,
-                source: conv.source,
-                attachments: attachments
+                source: conv.source
+                // attachments: attachments
+            }
+
+            // Nếu đang reply tin nhắn, thêm replyToMessageId
+            if (this.selected_reply_message?.message_id) {
+                data.replyToMessageId = this.selected_reply_message.message_id
             }
 
             if (conv.source === 'zalo') {
@@ -1111,6 +1349,10 @@ export default {
                 })
 
                 if (res.success) {
+                    // Clear reply message sau khi gửi thành công
+                    this.selected_reply_message = null
+                    this.show_reply_message = false
+
                     // Update conversation list với tin nhắn mới
                     const conv_index = this.conversations.findIndex(c => c.id === conv.id)
                     if (conv_index !== -1) {
@@ -1190,6 +1432,53 @@ export default {
             } finally {
                 this.processingTags = this.processingTags.filter(id => id !== tag.id)
             }
+        },
+        handleMessageKeydown(event) {
+            // Handle shortcut suggestions navigation
+            if (this.show_shortcut_suggestions && this.filtered_shortcuts.length) {
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault()
+                    this.selected_shortcut_index = (this.selected_shortcut_index + 1) % this.filtered_shortcuts.length
+                    this.scrollShortcutIntoView()
+                    return
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault()
+                    this.selected_shortcut_index = this.selected_shortcut_index === 0 ? this.filtered_shortcuts.length - 1 : this.selected_shortcut_index - 1
+                    this.scrollShortcutIntoView()
+                    return
+                } else if (event.key === 'Enter') {
+                    event.preventDefault()
+                    this.selectShortcut(this.filtered_shortcuts[this.selected_shortcut_index])
+                    return
+                } else if (event.key === 'Escape') {
+                    event.preventDefault()
+                    this.show_shortcut_suggestions = false
+                    return
+                }
+            }
+
+            // Handle normal message send
+            if (event.key === 'Enter') {
+                event.preventDefault()
+                this.sendMessage(this.current_conversation)
+            }
+        },
+        scrollShortcutIntoView() {
+            this.$nextTick(() => {
+                const item = this.$refs['shortcutItem' + this.selected_shortcut_index]
+                if (item) {
+                    const el = Array.isArray(item) ? item[0] : item
+                    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+                }
+            })
+        },
+        selectShortcut(shortcut) {
+            if (!shortcut) return
+            this.message_input = shortcut.content || ''
+            this.show_shortcut_suggestions = false
+            this.$nextTick(() => {
+                this.$refs.msgInput?.focus()
+            })
         },
         handleSendVoice({ file, save }) {
             // file is the response from upload API, usually contains url

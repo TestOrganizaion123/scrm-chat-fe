@@ -92,7 +92,8 @@ const routes = [
     {
         path: '/auth',
         name: 'Auth',
-        component: () => import('@/pages/AuthCrm.vue')
+        component: () => import('@/pages/AuthCrm.vue'),
+        meta: { guest: true }
     }
 ]
 
@@ -101,21 +102,23 @@ const router = createRouter({
     routes
 })
 
-// Navigation guard - Tạm thời bỏ qua auth để test UI
+// Navigation guard - Check authentication
 router.beforeEach((to, from, next) => {
-    // const token = getToken()
-    // const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-    // const isGuestRoute = to.matched.some(record => record.meta.guest)
+    const token = localStorage.getItem('accessToken')
+    const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+    const isGuestRoute = to.matched.some(record => record.meta.guest)
 
-    // if (requiresAuth && !token) {
-    //   next({ name: 'Login', query: { redirect: to.fullPath } })
-    //   return
-    // }
+    // Nếu route yêu cầu auth nhưng chưa có token -> redirect to /auth
+    if (requiresAuth && !token) {
+        next({ name: 'Auth' })
+        return
+    }
 
-    // if (isGuestRoute && token) {
-    //   next({ name: 'Platforms' })
-    //   return
-    // }
+    // Nếu đã có token và đang ở guest route (auth page) -> redirect to app
+    if (isGuestRoute && token) {
+        next({ path: '/app/chat' })
+        return
+    }
 
     next()
 })

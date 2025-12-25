@@ -27,7 +27,7 @@
             <div class="text-center text-[#7D91A6] text-base font-medium font-['Inter_Tight'] leading-6 mb-[32px]">Vui lòng nhập mã OTP hiển thị trên thiết bị của bạn</div>
 
             <div class="flex gap-[12px] mb-[38px]">
-                <input v-for="(val, index) in otpValues" :key="index" :ref="el => setOtpInput(el, index)" v-model="otpValues[index]" type="text" class="w-[48px] h-[48px] border border-gray-200 rounded-[8px] text-center text-xl font-semibold focus:border-[#0069FE] focus:outline-none text-Text-Primary-900" maxlength="1" @input="handleOtpInput(index, $event)" @keydown.delete="handleOtpDelete(index, $event)" @paste="handleOtpPaste" />
+                <input v-for="(val, index) in otpValues" :key="index" :ref="el => setOtpInput(el, index)" v-model="otpValues[index]" type="text" class="otp-input w-[48px] h-[48px] rounded-[8px] text-center text-xl font-semibold text-Text-Primary-900" maxlength="1" @input="handleOtpInput(index, $event)" @keydown.delete="handleOtpDelete(index, $event)" @paste="handleOtpPaste" />
             </div>
             <div class="flex items-center justify-center font-medium font-['Inter_Tight'] leading-5 bg-[#0069FE] w-full rounded-[8px] text-white p-[14px] cursor-pointer hover:bg-blue-600 transition-colors" @click="submitOtp()">Xác nhận mã OTP</div>
         </div>
@@ -210,7 +210,17 @@ const loginWithFacebook = () => {
 .np-container {
     width: 100%;
     height: 100%;
+    min-height: 100vh;
     background: #e8f1fd;
 }
-/* Add your styles here */
+
+/* Override global input border reset for OTP inputs */
+.otp-input {
+    border: 1px solid #d0d5dd !important;
+}
+
+.otp-input:focus {
+    border: 1px solid #0069fe !important;
+    outline: none !important;
+}
 </style>

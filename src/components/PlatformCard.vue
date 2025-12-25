@@ -73,7 +73,7 @@ export default {
             default: null
         }
     },
-    emits: ['addUser', 'toggleDropdown'],
+    emits: ['addUser', 'toggleDropdown', 'navigateToChat'],
     data() {
         return {
             userListUser: []

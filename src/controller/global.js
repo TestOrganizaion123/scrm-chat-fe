@@ -27,6 +27,7 @@ Object.assign(window, {
 
     api: async ({ url, data = {}, method = 'GET', params, headers = {} }) => {
         let host = location.protocol + '//gateway.' + location.hostname.split('.').slice(-2).join('.')
+
         let is_form_data = data instanceof FormData
 
         return axios({

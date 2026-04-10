@@ -3,6 +3,8 @@
         <!-- Page Header -->
         <PageHeader title="Kết nối nền tảng" @back="showChat = false" />
 
+        {{ 12313132 }}
+
         <!-- Chat View -->
         <div v-if="showChat" class="flex flex-col h-full bg-[#f0f2f5] font-['Inter'] flex-1 overflow-hidden">
             <div class="w-full flex flex-1 overflow-hidden">
